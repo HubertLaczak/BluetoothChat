@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SettingsActivity"
+    android:orientation="vertical"
+    >
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+
+                <Button
+                    android:id="@+id/btON"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Turn ON"
+
+                    />
+
+                <Button
+                    android:id="@+id/btOFF"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Turn OFF" />
+
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvONOFF"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="..."
+                android:textSize="20dp" />
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="41dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btDiscoverability"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="startDiscoverability"
+                    android:text="Bądź widoczny!" />
+
+                <TextView
+                    android:id="@+id/tvDiscoverability"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:text="Siemka!"/> <!-- https://www.youtube.com/watch?v=YwTV3OIHorU&list=PLFh8wpMiEi8_I3ujcYY3-OaaYyLudI_qi&index=9-->
+                    android:textSize="20dp" />
+
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btShow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Show paired devices" />
+
+
+            <ListView
+                android:id="@+id/lvPaired"
+                android:layout_width="match_parent"
+                android:layout_height="130dp" />
+
+            <Button
+                android:id="@+id/btScan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="startScan"
+                android:text="Scan" />
+
+
+            <ListView
+                android:id="@+id/lvScan"
+                android:layout_width="match_parent"
+                android:layout_height="122dp" />
+
+
+        </LinearLayout>
+    </ScrollView>
+
+
+
+</LinearLayout>
