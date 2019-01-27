@@ -1,5 +1,29 @@
 <resources>
+    <!--For Setting-->
     <string name="app_name">myChat</string>
     <string name="textWelcome">Welcome </string>
+    <string name="bluetoothON">Bluetooth ON </string>
+    <string name="bluetoothOFF">Bluetooth OFF </string>
+    <string name="editTextChangeNick">Type a new nick</string>
+    <string name="btnChangeNick">Change nick</string>
+    <string name="discoverability">Be a detectable!</string>
+    <string name="showBonded">Show paired devices</string>
+    <string name="scanButton">Scan</string>
+
+    <!--For Messages-->
+    <string name="hintWriteMessage">Write a text!</string>
+    <string name="sendButtonText">Send</string>
+    <string name="beAClient">Be a Client</string>
+    <string name="beAServer">Be a Server</string>
+    <string name="reset">Reset</string>
+    <string name="status">Here will be the status...</string>
+
+    <!--For About-->
+    <string name="about1">Application created by Hubert</string>
+    <string name="about2">Thanks to Sarthi Technology</string>
+    <string name="about3">28. January 2019</string>
+
+    <!--For Start-->
+    <string name="textViewStart">Welcome to Bluetooth Chat!</string>
 
 </resources>

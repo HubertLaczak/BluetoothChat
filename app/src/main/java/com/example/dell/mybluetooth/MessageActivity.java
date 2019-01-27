@@ -187,6 +187,8 @@ public class MessageActivity extends AppCompatActivity {
                     break;
                 case STATE_CONNECTED:
                     status.setText("Connected with: " + (String)msg.obj);
+                    send.setEnabled(true);
+
                     hideTop();
                     break;
                 case STATE_CONNECTION_FAILED:
@@ -352,6 +354,7 @@ public class MessageActivity extends AppCompatActivity {
     public void findViewByID(){
         listen = findViewById(R.id.btnListen);
         send = findViewById(R.id.btnSend);
+        send.setEnabled(false);
         listView = findViewById(R.id.listView);
         status = findViewById(R.id.tvStatus);
         writeMsg = findViewById(R.id.etMessage);
@@ -377,21 +380,26 @@ public class MessageActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id. item1:
+                Toast.makeText(this, "This window already opened", Toast.LENGTH_SHORT).show();
+                break;
             case R.id.item3:
                 openActivity3();
-                return true;
+                break;
             case R.id.item2:
                 openActivity2();
-                return true;
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
     private void openActivity2() {
         Intent intent = new Intent(this, SettingsActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
     }
     private void openActivity3() {
         Intent intent = new Intent(this, AboutActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
     }
 }

@@ -38,7 +38,7 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
 
     Button buttonON, buttonOFF, buttonShowPaired, buttonScan, buttonDiscoverability;
     ListView listViewPaired, listViewScan;
-    public TextView testViewDiscoverability, tvONOFF;
+    TextView tvONOFF;
     BluetoothAdapter myBluetoothAdapter, myBluetoothAdapterPaired;
 
     TextView WelcomeMessage;
@@ -47,7 +47,6 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
     ArrayList<BluetoothDevice> mBTDevices = new ArrayList<>();
     ArrayAdapter<String> BTArrayAdapter;
 
-    String newAddress;
 
     Button  btn_changeNick;
     EditText text_newNick;
@@ -66,7 +65,6 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
         findViewByID();
         bDevInit();
 
-
         bluetoothONMethod(); //włączenie Bluetootha
         bluetoothOFFMethod(); //wyłączenie Bluetootha
 
@@ -74,11 +72,34 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
 
         registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); //służy do zakrycia klawiatury
-
-
-
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (myBluetoothAdapter.isEnabled()) {
+            bIsOn();
+        } else {
+            if (!myBluetoothAdapter.isEnabled()) {
+                bIsOff();
+            }
+        }
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(bReceiver);
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        readNickAndSetTextV();
+    }
+    private void readNickAndSetTextV(){
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        txtNickName = sharedPref.getString("NickName", "User");
+        WelcomeMessage.setText(getString(R.string.textWelcome) + " " + txtNickName + "!");
+    }
     private void changeNickName(String s) {
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sharedPref.edit();
@@ -89,15 +110,19 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
     }
 
     public void findViewByID(){
-        buttonON = (Button) findViewById(R.id.btON);
-        buttonOFF = (Button) findViewById(R.id.btOFF);
-        tvONOFF = (TextView) findViewById(R.id.tvONOFF);
-        buttonShowPaired = (Button) findViewById(R.id.btShow); //przycisk do pokazywania sparowanych urządzeń
-        listViewPaired = (ListView) findViewById(R.id.lvPaired); //lista do wyświetlania sparowanych urządzeń
-        buttonDiscoverability = (Button) findViewById(R.id.btDiscoverability); //aby być widocznym przez 30s?
+        WelcomeMessage = findViewById(R.id.WelcomeMessage);
+        WelcomeMessage.setText(txtNickName);
 
-        buttonScan = (Button) findViewById(R.id.btScan); //przycisk do pokazywania urządzeń w pobliżu
-        listViewScan = (ListView) findViewById(R.id.lvScan); //lista do wyświetlania urządzeń w pobliżu
+        buttonON =  findViewById(R.id.btON);
+        buttonOFF = findViewById(R.id.btOFF);
+        tvONOFF = findViewById(R.id.tvONOFF); //textview on/off bluetooth
+        buttonShowPaired = findViewById(R.id.btShow); //przycisk do pokazywania sparowanych urządzeń
+        listViewPaired =  findViewById(R.id.lvPaired); //lista do wyświetlania sparowanych urządzeń
+
+        buttonDiscoverability = findViewById(R.id.btDiscoverability); //aby być widocznym przez 30s?
+
+        buttonScan =  findViewById(R.id.btScan); //przycisk do pokazywania urządzeń w pobliżu
+        listViewScan = findViewById(R.id.lvScan); //lista do wyświetlania urządzeń w pobliżu
 
         btn_changeNick = findViewById(R.id.btn_changeNick);
         text_newNick = findViewById(R.id.text_newNick);
@@ -108,8 +133,6 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
                 text_newNick.setText("");
             }
         });
-        WelcomeMessage = findViewById(R.id.WelcomeMessage);
-        WelcomeMessage.setText(txtNickName);
     }
 
     public void bDevInit(){
@@ -124,14 +147,14 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
     }
 
     public void bIsOn(){
-        tvONOFF.setText("Włączone");
+        tvONOFF.setText(R.string.bluetoothON);
         tvONOFF.setTextColor(Color.rgb(0,255,0));
         buttonON.setEnabled(false);
         buttonOFF.setEnabled(true);
     }
 
     public void bIsOff(){
-        tvONOFF.setText("Wyłączone");
+        tvONOFF.setText(R.string.bluetoothOFF);
         tvONOFF.setTextColor(Color.rgb(255,0,0));
         buttonON.setEnabled(true);
         buttonOFF.setEnabled(false);
@@ -139,57 +162,9 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
     }
 
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (myBluetoothAdapter.isEnabled()) {
-            bIsOn();
-        } else {
-            if (!myBluetoothAdapter.isEnabled()) {
-            bIsOff();
-            }
-        }
-
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unregisterReceiver(bReceiver);
-    }
 
 
-        @Override
-        public boolean onCreateOptionsMenu (Menu menu){
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu, menu);
-        return true;
 
-    }
-
-        @Override
-        public boolean onOptionsItemSelected (MenuItem item){
-        switch (item.getItemId()) {
-            case R.id.item1:
-                openActivity1();
-                return true;
-            case R.id.item3:
-                openActivity3();
-                return true;
-
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-        private void openActivity3 () {
-        Intent intent = new Intent(this, AboutActivity.class);
-        startActivity(intent);
-    }
-
-        private void openActivity1 () {
-        Intent intent = new Intent(this, MessageActivity.class);
-        startActivity(intent);
-    }
 
     protected void showButton() /*metoda do pokazywania sparowanych urządzeń*/ {
         buttonShowPaired.setOnClickListener(new View.OnClickListener() {
@@ -306,17 +281,7 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
         }
     };
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        readNickAndSetTextV();
-    }
 
-    private void readNickAndSetTextV(){
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        txtNickName = sharedPref.getString("NickName", "User");
-        WelcomeMessage.setText(getString(R.string.textWelcome) + " " + txtNickName + "!");
-    }
 
     public void startDiscoverability(View view) {
         Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
@@ -329,9 +294,41 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
     @Override //służy do parowania - trzeba zaimplementować AdapterView.OnItemClickListener
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         myBluetoothAdapterPaired.cancelDiscovery(); //stopujemy szukanie na początku
-        String deviceName = mBTDevices.get(i).getName();
-        String deviceAddress = mBTDevices.get(i).getAddress();
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2)
             mBTDevices.get(i).createBond(); //createBond może być użyte dopiero od JellyBean
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu (Menu menu){
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+
+    }
+    @Override
+    public boolean onOptionsItemSelected (MenuItem item){
+        switch (item.getItemId()) {
+            case R.id.item1:
+                openActivity1();
+                break;
+            case R.id.item2:
+                Toast.makeText(this, "This window already opened", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.item3:
+                openActivity3();
+                break;
+
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    private void openActivity3 () {
+        Intent intent = new Intent(this, AboutActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+    }
+    private void openActivity1 () {
+        Intent intent = new Intent(this, MessageActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 }
