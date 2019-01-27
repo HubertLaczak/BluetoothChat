@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".AboutActivity"
-    >
+    tools:context=".AboutActivity">
 
-    <TextView
-        android:id="@+id/tVFromAbout"
-        android:layout_width="355dp"
-        android:layout_height="315dp"
-        android:text="About "
-        android:textSize="15dp" />
-</RelativeLayout>
+</android.support.constraint.ConstraintLayout>

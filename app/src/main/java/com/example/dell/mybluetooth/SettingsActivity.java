@@ -8,8 +8,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -18,9 +20,11 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,9 +40,19 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
     ListView listViewPaired, listViewScan;
     public TextView testViewDiscoverability, tvONOFF;
     BluetoothAdapter myBluetoothAdapter, myBluetoothAdapterPaired;
+
+    TextView WelcomeMessage;
+    String txtNickName;
+
+    ArrayList<BluetoothDevice> mBTDevices = new ArrayList<>();
     ArrayAdapter<String> BTArrayAdapter;
-    List<BluetoothDevice> mBTDevices = new ArrayList<>();
+
     String newAddress;
+
+    Button  btn_changeNick;
+    EditText text_newNick;
+    SharedPreferences sharedPref;
+
 
     Intent btEnablingIntent;
     int requestCodeForEnable;
@@ -59,7 +73,19 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
         showButton();
 
         registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); //służy do zakrycia klawiatury
 
+
+
+    }
+
+    private void changeNickName(String s) {
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString("NickName", s);
+        editor.commit();
+        Toast.makeText(this, "Zmieniono nick!", Toast.LENGTH_SHORT).show();
+        WelcomeMessage.setText(getString(R.string.textWelcome) + " " + s + "!");
     }
 
     public void findViewByID(){
@@ -69,10 +95,21 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
         buttonShowPaired = (Button) findViewById(R.id.btShow); //przycisk do pokazywania sparowanych urządzeń
         listViewPaired = (ListView) findViewById(R.id.lvPaired); //lista do wyświetlania sparowanych urządzeń
         buttonDiscoverability = (Button) findViewById(R.id.btDiscoverability); //aby być widocznym przez 30s?
-        testViewDiscoverability = (TextView) findViewById(R.id.tvDiscoverability);
 
         buttonScan = (Button) findViewById(R.id.btScan); //przycisk do pokazywania urządzeń w pobliżu
         listViewScan = (ListView) findViewById(R.id.lvScan); //lista do wyświetlania urządzeń w pobliżu
+
+        btn_changeNick = findViewById(R.id.btn_changeNick);
+        text_newNick = findViewById(R.id.text_newNick);
+        btn_changeNick.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                changeNickName(text_newNick.getText().toString());
+                text_newNick.setText("");
+            }
+        });
+        WelcomeMessage = findViewById(R.id.WelcomeMessage);
+        WelcomeMessage.setText(txtNickName);
     }
 
     public void bDevInit(){
@@ -268,6 +305,18 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
             }
         }
     };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        readNickAndSetTextV();
+    }
+
+    private void readNickAndSetTextV(){
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        txtNickName = sharedPref.getString("NickName", "User");
+        WelcomeMessage.setText(getString(R.string.textWelcome) + " " + txtNickName + "!");
+    }
 
     public void startDiscoverability(View view) {
         Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);

@@ -5,8 +5,11 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.opengl.Visibility;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -17,6 +20,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,9 +40,10 @@ import java.util.UUID;
 
 public class MessageActivity extends AppCompatActivity {
 
-    Button send, listen, listDevices; EditText writeMsg;
+    Button send, listen, listDevices, reset;
+    EditText writeMsg;
     ListView listView;
-    TextView status, msg_box;
+    TextView status;
 
     ListView mojawiadomosc;
     ArrayAdapter<String> BTArrayAdapter;
@@ -46,6 +51,7 @@ public class MessageActivity extends AppCompatActivity {
     BluetoothAdapter bluetoothAdapter;
     BluetoothDevice[] btArray;
     BluetoothDevice bdConnected;
+    String bdConnectedString;
 
     SendReceive sendReceive;
 
@@ -57,14 +63,22 @@ public class MessageActivity extends AppCompatActivity {
     static final int STATE_CONNECTED = 3;
     static final int STATE_CONNECTION_FAILED = 4;
     static final int STATE_MESSAGE_RECEIVED = 5;
+    static final int CHANGE_STRING_CONNECTED_WITH = 6;
 
     int REQUEST_ENABLE_BLUETOOTH = 1;
+
+    String txtNickName;
+    LinearLayout linearLayoutWithButtons;
+
+    String connectedWith = "null";
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_message);
+        txtNickName = "User";
 
         mojawiadomosc = findViewById(R.id.mojawiadomosc);
         BTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
@@ -78,6 +92,14 @@ public class MessageActivity extends AppCompatActivity {
             startActivityForResult(enableIntent, REQUEST_ENABLE_BLUETOOTH);
         }
         implementListeners();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        txtNickName = sharedPref.getString("NickName", "User");
+
     }
 
     private void implementListeners() {
@@ -100,6 +122,7 @@ public class MessageActivity extends AppCompatActivity {
                     ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, strings);
                     listView.setAdapter(arrayAdapter);
                 }
+                Toast.makeText(MessageActivity.this, "Select the device from the list", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -109,6 +132,8 @@ public class MessageActivity extends AppCompatActivity {
             public void onClick(View v) {
                 ServerClass serverClass = new ServerClass();
                 serverClass.start();
+                hideTop();
+                Toast.makeText(MessageActivity.this, "Wait for connection...", Toast.LENGTH_SHORT).show();
             }
         });
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -118,11 +143,12 @@ public class MessageActivity extends AppCompatActivity {
                  clientClass.start();
                  status.setText("Connecting");
             }
+
         });
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String string = String.valueOf(getNowTime() + "\n" + "Od " + bdConnected.getName()+ "\n"+ writeMsg.getText() );
+                String string = String.valueOf(txtNickName + ": " + getNowTime() +  "\n"+ writeMsg.getText() );
                 sendReceive.write(string.getBytes());
             }
         });
@@ -135,11 +161,17 @@ public class MessageActivity extends AppCompatActivity {
 
     }
 
+    public void hideTop(){
+        linearLayoutWithButtons.setVisibility(View.GONE);
+        listView.setVisibility(View.GONE);
+        mojawiadomosc.getLayoutParams().height = 600;
+    }
+
     private String getNowTime() {
         DateFormat df = new SimpleDateFormat("H:m:s");
         Date now = Calendar.getInstance().getTime();
-        String text;
-        return text = df.format(now);
+        String text = df.format(now);
+        return text;
     }
 
 
@@ -154,17 +186,22 @@ public class MessageActivity extends AppCompatActivity {
                     status.setText("Connecting  ");
                     break;
                 case STATE_CONNECTED:
-                    status.setText("Connected");
+                    status.setText("Connected with: " + (String)msg.obj);
+                    hideTop();
                     break;
                 case STATE_CONNECTION_FAILED:
                     status.setText("Connecting Failed");
                     break;
-                case STATE_MESSAGE_RECEIVED: //zakomentuj ciało tego i sprawdź czy działa
+                case STATE_MESSAGE_RECEIVED:
                     byte[] readBuff = (byte[]) msg.obj;
                     String tempMsg = new String(readBuff,0,msg.arg1);
                     BTArrayAdapter.add(tempMsg);
+                    break;
+                case CHANGE_STRING_CONNECTED_WITH:
+                    byte[] readBuff2 = (byte[]) msg.obj;
+                    connectedWith = new String(readBuff2,0,msg.arg1);
+                    status.setText("Connected with: " + connectedWith);
 
-//                    msg_box.setText(tempMsg);
                     break;
 
             }
@@ -172,6 +209,8 @@ public class MessageActivity extends AppCompatActivity {
             return true;
         }
     });
+
+
 
     private class ServerClass extends Thread{
         private BluetoothServerSocket serverSocket;
@@ -190,7 +229,6 @@ public class MessageActivity extends AppCompatActivity {
                     Message message = Message.obtain();
                     message.what = STATE_CONNECTING;
                     handler.sendMessage(message);
-
                     socket = serverSocket.accept();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -205,6 +243,9 @@ public class MessageActivity extends AppCompatActivity {
                     handler.sendMessage(message);
                     sendReceive = new SendReceive(socket);
                     sendReceive.start();
+
+                    String string = txtNickName;
+                    sendReceive.write(string.getBytes());
                 }
             }
         }
@@ -218,6 +259,7 @@ public class MessageActivity extends AppCompatActivity {
             this.device = device1;
             try {
                 socket = device.createRfcommSocketToServiceRecord(MY_UUID);
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -226,12 +268,21 @@ public class MessageActivity extends AppCompatActivity {
         public void run(){
             try {
                 socket.connect();
-                Message message = Message.obtain();
-                message.what = STATE_CONNECTED;
-                handler.sendMessage(message);
+//                Message message = Message.obtain();
+//                message.what = STATE_CONNECTED;
+//                handler.sendMessage(message);
                 sendReceive = new SendReceive(socket);
                 sendReceive.start();
                 bdConnected = device;
+//                connectedWith = bdConnected.getName();
+                Message message = Message.obtain();
+                message.what = STATE_CONNECTED;
+                message.obj = bdConnected.getName();
+                handler.sendMessage(message);
+
+                String string = txtNickName;
+                sendReceive.write(string.getBytes());
+
             } catch (IOException e) {
                 e.printStackTrace();
                 Message message = Message.obtain();
@@ -240,8 +291,6 @@ public class MessageActivity extends AppCompatActivity {
             }
         }
     }
-
-
 
     private class SendReceive extends Thread{
         private final BluetoothSocket bluetoothSocket;
@@ -268,15 +317,19 @@ public class MessageActivity extends AppCompatActivity {
         public void run(){
             byte[] buffer = new byte[1024];
             int bytes;
-
-            while(true){
+            while (true) {
                 try {
                     bytes = inputStream.read(buffer);
-                    handler.obtainMessage(STATE_MESSAGE_RECEIVED, bytes, -1, buffer).sendToTarget(); //to później zakomentuj i sprawdź czy działa!!
+
+                    if(connectedWith.equals("null")) {
+                        handler.obtainMessage(CHANGE_STRING_CONNECTED_WITH, bytes, -1, buffer).sendToTarget();
+                    }
+                    if(!connectedWith.equals("null")){
+                        handler.obtainMessage(STATE_MESSAGE_RECEIVED, bytes, -1, buffer).sendToTarget();
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
             }
         }
 
@@ -287,7 +340,6 @@ public class MessageActivity extends AppCompatActivity {
                 String tempMsg = new String(readBuff, 0 ,msg.arg1);
                 BTArrayAdapter.add(tempMsg);
                 BTArrayAdapter.notifyDataSetChanged();
-//                msg_box.setText(tempMsg);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -301,11 +353,20 @@ public class MessageActivity extends AppCompatActivity {
         listen = findViewById(R.id.btnListen);
         send = findViewById(R.id.btnSend);
         listView = findViewById(R.id.listView);
-//        msg_box = findViewById(R.id.tvMessages);
         status = findViewById(R.id.tvStatus);
         writeMsg = findViewById(R.id.etMessage);
         listDevices = findViewById(R.id.btnDeviceList);
+        linearLayoutWithButtons = findViewById(R.id.linearLayout_buttons);
+        reset = findViewById(R.id.reset);
         }
+
+    public void resetSett(View view) {
+        Intent intent = new Intent(MessageActivity.this, MessageActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -317,7 +378,7 @@ public class MessageActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.item3:
-//                openActivity3();
+                openActivity3();
                 return true;
             case R.id.item2:
                 openActivity2();
