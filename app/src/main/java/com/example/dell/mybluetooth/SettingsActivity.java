@@ -11,11 +11,10 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -30,7 +29,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 
@@ -39,7 +37,7 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
     Button buttonON, buttonOFF, buttonShowPaired, buttonScan, buttonDiscoverability;
     ListView listViewPaired, listViewScan;
     TextView tvONOFF;
-    BluetoothAdapter myBluetoothAdapter, myBluetoothAdapterPaired;
+    BluetoothAdapter myBluetoothAdapter; // Reprezentuje kartę Bluetooth urządzenia lokalnego. BluetoothAdapter pozwala wykonywać podstawowe zadania
 
     TextView WelcomeMessage;
     String txtNickName;
@@ -65,16 +63,13 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
         findViewByID();
         bDevInit();
 
-        bluetoothONMethod(); //włączenie Bluetootha
-        bluetoothOFFMethod(); //wyłączenie Bluetootha
+        bluetoothONMethod();    //włączenie Bluetootha
+        bluetoothOFFMethod();   //wyłączenie Bluetootha
 
-        showButton();
-
-        registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
-        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); //służy do zakrycia klawiatury
+        showButton();   //metoda do pokazywania sparowanych urządzeń
     }
 
-    @Override
+    @Override //obsługa wyglądu UI dla bt.ON/bt.OFF
     protected void onStart() {
         super.onStart();
         if (myBluetoothAdapter.isEnabled()) {
@@ -85,28 +80,15 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
             }
         }
     }
-    @Override
+    @Override //unregister receiver
     protected void onDestroy() {
         super.onDestroy();
         unregisterReceiver(bReceiver);
     }
-    @Override
+    @Override //zczywanie nicku
     protected void onResume() {
         super.onResume();
         readNickAndSetTextV();
-    }
-    private void readNickAndSetTextV(){
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        txtNickName = sharedPref.getString("NickName", "User");
-        WelcomeMessage.setText(getString(R.string.textWelcome) + " " + txtNickName + "!");
-    }
-    private void changeNickName(String s) {
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString("NickName", s);
-        editor.commit();
-        Toast.makeText(this, "Zmieniono nick!", Toast.LENGTH_SHORT).show();
-        WelcomeMessage.setText(getString(R.string.textWelcome) + " " + s + "!");
     }
 
     public void findViewByID(){
@@ -115,14 +97,14 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
 
         buttonON =  findViewById(R.id.btON);
         buttonOFF = findViewById(R.id.btOFF);
-        tvONOFF = findViewById(R.id.tvONOFF); //textview on/off bluetooth
-        buttonShowPaired = findViewById(R.id.btShow); //przycisk do pokazywania sparowanych urządzeń
-        listViewPaired =  findViewById(R.id.lvPaired); //lista do wyświetlania sparowanych urządzeń
+        tvONOFF = findViewById(R.id.tvONOFF);
+        buttonShowPaired = findViewById(R.id.btShow);
+        listViewPaired =  findViewById(R.id.lvPaired);
 
-        buttonDiscoverability = findViewById(R.id.btDiscoverability); //aby być widocznym przez 30s?
+        buttonDiscoverability = findViewById(R.id.btDiscoverability);
 
-        buttonScan =  findViewById(R.id.btScan); //przycisk do pokazywania urządzeń w pobliżu
-        listViewScan = findViewById(R.id.lvScan); //lista do wyświetlania urządzeń w pobliżu
+        buttonScan =  findViewById(R.id.btScan);
+        listViewScan = findViewById(R.id.lvScan);
 
         btn_changeNick = findViewById(R.id.btn_changeNick);
         text_newNick = findViewById(R.id.text_newNick);
@@ -133,40 +115,38 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
                 text_newNick.setText("");
             }
         });
+
+        registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); //służy do zakrycia klawiatury
     }
 
     public void bDevInit(){
-        myBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        myBluetoothAdapterPaired = BluetoothAdapter.getDefaultAdapter();
+        myBluetoothAdapter = BluetoothAdapter.getDefaultAdapter(); //Get a handle to the default local Bluetooth adapter
         btEnablingIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         requestCodeForEnable = 1;
         BTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         listViewScan.setAdapter(BTArrayAdapter);
         listViewScan.setOnItemClickListener(SettingsActivity.this);//musi być do wybierania danego urządzenia do sparowania!
-
     }
 
-    public void bIsOn(){
-        tvONOFF.setText(R.string.bluetoothON);
-        tvONOFF.setTextColor(Color.rgb(0,255,0));
-        buttonON.setEnabled(false);
-        buttonOFF.setEnabled(true);
+    //zczytywanie nicku
+    private void readNickAndSetTextV(){
+        sharedPref = getApplicationContext().getSharedPreferences("MyPREFERENCES", Context.MODE_PRIVATE); //
+        txtNickName = sharedPref.getString("NickName", "User");
+        WelcomeMessage.setText(getString(R.string.textWelcome) + " " + txtNickName + "!");
+    }
+    //zapisywanie nicku
+    private void changeNickName(String s) {
+        sharedPref = getApplicationContext().getSharedPreferences("MyPREFERENCES", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString("NickName", s);
+        editor.commit();
+        Toast.makeText(this, "Zmieniono nick!", Toast.LENGTH_SHORT).show();
+        WelcomeMessage.setText(getString(R.string.textWelcome) + " " + s + "!");
     }
 
-    public void bIsOff(){
-        tvONOFF.setText(R.string.bluetoothOFF);
-        tvONOFF.setTextColor(Color.rgb(255,0,0));
-        buttonON.setEnabled(true);
-        buttonOFF.setEnabled(false);
-
-    }
-
-
-
-
-
-
-    protected void showButton() /*metoda do pokazywania sparowanych urządzeń*/ {
+    //metoda do pokazywania sparowanych urządzeń
+    private void showButton()  {
         buttonShowPaired.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -186,39 +166,21 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
         });
     }
 
-    public void clearListView(ListView lv) {
-        this.lv = lv;
-        lv.setAdapter(null);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == requestCodeForEnable) {
-            if (resultCode == RESULT_OK) {
-                Toast.makeText(getApplicationContext(), "Bluetooth is enable!", Toast.LENGTH_SHORT).show();
-                bIsOn(); //czy ja mogę to zakomentować>? Sprawdz to. Pytam, bo są dwie wywołania tej funkcji
-
-            } else if (requestCode == RESULT_CANCELED) {
-                Toast.makeText(getApplicationContext(), "Bluetooth enabling cancelled", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
     private void bluetoothONMethod() {
         buttonON.setOnClickListener(new View.OnClickListener() {
-            @SuppressLint("ResourceAsColor")
             @Override
             public void onClick(View v) {
                 if (myBluetoothAdapter == null) {
                     Toast.makeText(getApplicationContext(), "Bluetooth not supported", Toast.LENGTH_LONG).show();
                 }
                 if (!myBluetoothAdapter.isEnabled()) {
-                    startActivityForResult(btEnablingIntent, requestCodeForEnable);
+                    startActivityForResult(btEnablingIntent, requestCodeForEnable); //nie zostanie zwrócone onActivityResult
                 }
             }
         });
     }
 
+    //wyłączanie Bluetooth przyciskiem
     private void bluetoothOFFMethod() {
         buttonOFF.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -232,37 +194,17 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
             }
         });
     }
-
+    //obsługa włączenia skanowania okolicy
     public void startScan(View view) {
-        if (myBluetoothAdapterPaired .isDiscovering()) {
-            // the button is pressed when it discovers, so cancel the discovery
-            myBluetoothAdapterPaired .cancelDiscovery();
+        if (myBluetoothAdapter.isDiscovering()) {
+            myBluetoothAdapter.cancelDiscovery();
         } else {
             BTArrayAdapter.clear();
-            myBluetoothAdapterPaired.startDiscovery();
-        }
-
-    }
-
-
-    private void checkBTPermissions() {
-        /**
-         * This method is required for all devices running API23+
-         * Android must programmatically check the permissions for bluetooth. Putting the proper permissions
-         * in the manifest is not enough.
-         *
-         * NOTE: This will only execute on versions > LOLLIPOP because it is not needed otherwise.
-         */
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-            int permissionCheck = this.checkSelfPermission("Manifest.permission.ACCESS_FINE_LOCATION");
-            permissionCheck += this.checkSelfPermission("Manifest.permission.ACCESS_COARSE_LOCATION");
-            if (permissionCheck != 0) {
-
-                this.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1001); //Any number
-            }
+            myBluetoothAdapter.startDiscovery();
         }
     }
-// w okolicy!
+
+    // w okolicy!
     final BroadcastReceiver bReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -271,8 +213,6 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
                 // Get the BluetoothDevice object from the Intent
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                     mBTDevices.add(device);
-
-                // add the name and the MAC address of the object to the arrayAdapter
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
                         BTArrayAdapter.add(device.getName() + "\n" + device.getAddress());
                 }
@@ -282,7 +222,7 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
     };
 
 
-
+    //obsługa bycia widocznym
     public void startDiscoverability(View view) {
         Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
         intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 30); //for 30second
@@ -290,12 +230,29 @@ public class SettingsActivity extends AppCompatActivity implements AdapterView.O
         Toast.makeText(getApplicationContext(), "Jesteś widoczny przez 30 sekund", Toast.LENGTH_SHORT).show();
     }
 
-
     @Override //służy do parowania - trzeba zaimplementować AdapterView.OnItemClickListener
-    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-        myBluetoothAdapterPaired.cancelDiscovery(); //stopujemy szukanie na początku
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) { //long: The row id of the item that was clicked.
+        myBluetoothAdapter.cancelDiscovery(); //stopujemy szukanie na początku
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2)
             mBTDevices.get(i).createBond(); //createBond może być użyte dopiero od JellyBean
+    }
+
+    public void bIsOn(){
+        tvONOFF.setText(R.string.bluetoothON);
+        tvONOFF.setTextColor(Color.rgb(0,255,0));
+        buttonON.setEnabled(false);
+        buttonOFF.setEnabled(true);
+    }
+    public void bIsOff(){
+        tvONOFF.setText(R.string.bluetoothOFF);
+        tvONOFF.setTextColor(Color.rgb(255,0,0));
+        buttonON.setEnabled(true);
+        buttonOFF.setEnabled(false);
+
+    }
+    public void clearListView(ListView lv) {
+        this.lv = lv;
+        lv.setAdapter(null);
     }
 
     @Override
